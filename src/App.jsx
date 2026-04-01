@@ -1,0 +1,140 @@
+import { useState, useEffect } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+
+export default function Tasks() {
+  const [tasks, setTasks] = useState(() => {
+    const saved = localStorage.getItem("tasks");
+    return saved ? JSON.parse(saved) : [];
+  });
+
+  const [input, setInput] = useState("");
+  const [searchParams] = useSearchParams();
+  const filter = searchParams.get("filter");
+
+  // Save to localStorage
+  useEffect(() => {
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+  }, [tasks]);
+
+  // Add Task
+  const addTask = () => {
+    if (!input.trim()) return;
+    const newTask = {
+      id: Date.now(),
+      title: input,
+      completed: false,
+    };
+    setTasks([...tasks, newTask]);
+    setInput("");
+  };
+
+  // Delete Task
+  const deleteTask = (id) => {
+    setTasks(tasks.filter((t) => t.id !== id));
+  };
+
+  // Toggle Complete
+  const toggleTask = (id) => {
+    setTasks(
+      tasks.map((t) =>
+        t.id === id ? { ...t, completed: !t.completed } : t
+      )
+    );
+  };
+
+  // Filter
+  const filteredTasks =
+    filter === "active"
+      ? tasks.filter((t) => !t.completed)
+      : tasks;
+
+  return (
+    <div style={{ padding: "20px" }}>
+      <h1>📋 Task Manager</h1>
+
+      {/* Input */}
+      <div style={{ marginBottom: "20px" }}>
+        <input
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          placeholder="Enter task..."
+          style={{
+            padding: "10px",
+            borderRadius: "8px",
+            border: "none",
+            marginRight: "10px",
+          }}
+        />
+        <button
+          onClick={addTask}
+          style={{
+            padding: "10px 15px",
+            borderRadius: "8px",
+            border: "none",
+            background: "red",
+            color: "#fff",
+            fontWeight: "bold",
+            cursor: "pointer",
+          }}
+        >
+          Add
+        </button>
+      </div>
+
+      {/* Filter */}
+      <Link to="/tasks?filter=active" style={{ color: "#ff4d4d" }}>
+        Show Active Tasks
+      </Link>
+
+      {/* Glass Cards */}
+      <ul style={{ listStyle: "none", padding: 0 }}>
+        {filteredTasks.map((task) => (
+          <li
+            key={task.id}
+            style={{
+              margin: "12px 0",
+              padding: "15px",
+              borderRadius: "12px",
+              backdropFilter: "blur(10px)",
+              background: "rgba(255,255,255,0.05)",
+              boxShadow: "0 0 10px rgba(255,0,0,0.3)",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+              transition: "0.3s",
+            }}
+          >
+            {/* Task Title */}
+            <span
+              onClick={() => toggleTask(task.id)}
+              style={{
+                cursor: "pointer",
+                textDecoration: task.completed ? "line-through" : "none",
+              }}
+            >
+              {task.title}
+            </span>
+
+            {/* Actions */}
+            <div style={{ display: "flex", gap: "10px" }}>
+              <Link to={`/tasks/${task.id}`}>🔍</Link>
+
+              <button
+                onClick={() => deleteTask(task.id)}
+                style={{
+                  border: "none",
+                  background: "transparent",
+                  color: "red",
+                  cursor: "pointer",
+                  fontSize: "16px",
+                }}
+              >
+                ❌
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
